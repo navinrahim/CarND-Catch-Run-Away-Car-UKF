@@ -139,9 +139,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     is_initialized_ = true;
 	
 	// print the output
-    cout <<"-------\n";
-    cout << "x_ = \n" << x_ << endl;
-    cout << "P_ = \n" << P_ << endl;
+    // cout <<"-------\n";
+    // cout << "x_ = \n" << x_ << endl;
+    // cout << "P_ = \n" << P_ << endl;
 	
     return;
   }
@@ -169,9 +169,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   }
   
   // print the output
-  cout <<"-------\n";
-  cout << "x_ = \n" << x_ << endl;
-  cout << "P_ = \n" << P_ << endl; 
+  // cout <<"-------\n";
+  // cout << "x_ = \n" << x_ << endl;
+  // cout << "P_ = \n" << P_ << endl; 
   
 }
 

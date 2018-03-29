@@ -24,6 +24,14 @@ std::string hasData(std::string s) {
   }
   return "";
 }
+long long time_pred = 0.0;
+double heading_to_target;
+double heading_difference;
+double distance_difference;
+double target_x = 0.0;
+double target_y = 0.0;
+int step=0;
+
 
 int main()
 {
@@ -31,11 +39,8 @@ int main()
 
   // Create a UKF instance
   UKF ukf;
-  
-  double target_x = 0.0;
-  double target_y = 0.0;
 
-  h.onMessage([&ukf,&target_x,&target_y](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  h.onMessage([&ukf](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -103,30 +108,84 @@ int main()
           iss_R >> timestamp_R;
           meas_package_R.timestamp_ = timestamp_R;
           
-    	  //ukf.ProcessMeasurement(meas_package_R);
-		  ukf.Prediction(10000000);
-
-	  target_x = ukf.x_[0];
-	  target_y = ukf.x_[1];
-
+    	  ukf.ProcessMeasurement(meas_package_R);
+		step+=1;
+		int flag=0;
+		if((time_pred<=meas_package_R.timestamp_) || (time_pred==0.0)) {
 		  
-		  double heading_to_target = atan2(target_y - hunter_y, target_x - hunter_x);
-    	  while (heading_to_target > M_PI) heading_to_target-=2.*M_PI; 
-    	  while (heading_to_target <-M_PI) heading_to_target+=2.*M_PI;
+		  time_pred = meas_package_R.timestamp_+2000000.0;	
+		  UKF ukf_predict = ukf;
+		  ukf_predict.Prediction(2);
+		  target_x = ukf_predict.x_[0];
+		  target_y = ukf_predict.x_[1];	
+		  heading_to_target = atan2(target_y - hunter_y, target_x - hunter_x);
+		  heading_to_target = atan2(sin(heading_to_target) , cos(heading_to_target));
     	  //turn towards the target
-    	  double heading_difference = heading_to_target - hunter_heading;
-    	  while (heading_difference > M_PI) heading_difference-=2.*M_PI; 
-    	  while (heading_difference <-M_PI) heading_difference+=2.*M_PI;
-
-    	  double distance_difference = sqrt((target_y - hunter_y)*(target_y - hunter_y) + (target_x - hunter_x)*(target_x - hunter_x));
-		  
-          json msgJson;
-          msgJson["turn"] = heading_difference;
-          msgJson["dist"] = distance_difference; 
+    	  heading_difference = heading_to_target - hunter_heading;
+    	  heading_difference = atan2(sin(heading_difference) , cos(heading_difference));
+		
+    	  distance_difference = sqrt((target_y - hunter_y)*(target_y - hunter_y) + (target_x - hunter_x)*(target_x - hunter_x));
+		   
+		  flag=1;
+		  step = 0;
+		  cout<<"first if \n ------------------------------------"<<endl;
+		  cout<<"timestamp_:"<<meas_package_R.timestamp_<<endl;
+		  cout<<"Time_Pred:"<<time_pred<<endl;
+		  cout<<"ukf_predict:"<<ukf_predict.x_<<endl;
+		}
+		else if(step == 80) {
+			double dt = (time_pred - meas_package_R.timestamp_) / 1000000.0 ;
+			UKF ukf_predict = ukf;
+			ukf_predict.Prediction(dt);
+			target_x = ukf_predict.x_[0];
+			target_y = ukf_predict.x_[1];	
+			heading_to_target = atan2(target_y - hunter_y, target_x - hunter_x);
+			heading_to_target = atan2(sin(heading_to_target) , cos(heading_to_target));
+			//turn towards the target
+			heading_difference = heading_to_target - hunter_heading;
+			heading_difference = atan2(sin(heading_difference) , cos(heading_difference));
+		
+			distance_difference = sqrt((target_y - hunter_y)*(target_y - hunter_y) + (target_x - hunter_x)*(target_x - hunter_x));
+			step= 0;
+			cout<<"else if \n ------------------------------------"<<endl;
+		    cout<<"timestamp_:"<<meas_package_R.timestamp_<<endl;
+		    cout<<"Time_Pred:"<<time_pred<<endl;
+			cout<<"step:"<<step<<endl;
+			cout<<"ukf_predict:"<<ukf_predict.x_<<endl;
+		}
+		
+		if(distance_difference >10 ) {
+			time_pred -= 1000000.0;
+			cout<<"distance_difference"<<distance_difference<<endl;;
+		 }
+		
+		cout<<"timestamp_:"<<meas_package_R.timestamp_<<endl;
+		cout<<"Time_Pred:"<<time_pred<<endl;
+		cout<<"step:"<<step<<endl;
+		// cout<<"heading_to_target:"<<heading_to_target<<endl;
+		// cout<<"heading_difference:"<<heading_difference<<endl;
+		// cout<<"distance_difference:"<<distance_difference<<endl;
+		// cout<<"target_x"<<target_x<<endl;
+		// cout<<"target_y"<<target_y<<endl;
+		
+		
+		json msgJson;
+		
+		if(flag==1) {
+		  msgJson["turn"] = heading_difference;  
+		  msgJson["dist"] = distance_difference;		  
+		}
+		else {
+		  msgJson["turn"] = 0;
+		  msgJson["dist"] = distance_difference;
+		}
+        
+		
+		
           auto msg = "42[\"move_hunter\"," + msgJson.dump() + "]";
           // std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
-	  
+	    
         }
       } else {
         // Manual driving
