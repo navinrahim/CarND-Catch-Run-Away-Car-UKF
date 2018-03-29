@@ -5,12 +5,18 @@ Self-Driving Car Engineer Nanodegree Program
 
 ### Overview
 
-This repository contains all the code needed to complete the Bonus Challenge: Catch the Run Away Car with Unscented Kalman Filter.
+This repository contains the code for the Bonus Challenge: Catch the Run Away Car with Unscented Kalman Filter.
 
 ### Project Introduction
 
-In this project, not only do you implement an UKF, but also use it to catch an escaped car driving in a circular path. 
-The run away car will be being sensed by a stationary sensor, that is able to measure both noisy lidar and radar data. The capture vehicle will need to use these measurements to close in on the run away car. To capture the run away car the capture vehicle needs to come within .1 unit distance of its position. However the capture car and the run away car have the same max velocity, so if the capture vehicle wants to catch the car, it will need to predict where the car will be ahead of time.
+In this project, UKF filter was implemented and it was used to catch an escaped car driving in a circular path. 
+The run away car will be being sensed by a stationary sensor, that is able to measure both noisy lidar and radar data. The capture vehicle uses these measurements to close in on the run away car. To capture the run away car the capture vehicle needs to come within .1 unit distance of its position. However the capture car and the run away car have the same max velocity, so if the capture vehicle wants to catch the car, it will need to predict where the car will be ahead of time.
+
+### Code
+The code for the UKF is present in `src/ukf.cpp`. The controlling of the capture car is done in `src/main.cpp`.
+
+### Output
+![Output](Capture.PNG)
 
 ### Running the Code
 
